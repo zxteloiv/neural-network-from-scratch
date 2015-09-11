@@ -1,6 +1,8 @@
 #!/usr/bin/env python2
 # coding: utf-8
 
+import random, copy
+
 class Vector:
     """
     Vector class uses python list as its internal structure.
@@ -19,8 +21,20 @@ class Vector:
     def fromIterable(cls, iterator):
         return Vector(list(iterator))
 
+    @classmethod
+    def fromRandom(cls, length):
+        """ generate a vector of given length with all random float num in [0, 1) """
+        return Vector([random.random() for i in xrange(length)])
+
     def __len__(self):
         return len(self.data)
+
+    def __getitem__(self, key):
+        return self.data[key]
+
+    def __setitem__(self, key, value):
+        self.data[key] = value
+        return self
 
     def __add__(self, another):
         """ overload + operator """
@@ -66,6 +80,9 @@ class Vector:
 
         return sum(one.data[i] * another.data[i] for i in xrange(len(one)))
 
+    def __copy__(self):
+        return Vector(copy.copy(self.data))
+
 def dot_prod(one, another):
     return Vector.dot_prod(one, another)
 
@@ -94,6 +111,15 @@ class Matrix:
 
         self.row_num = row_num
         self.col_num = col_num
+
+    @classmethod
+    def fromRandom(cls, row_num, col_num):
+        """
+        Generate a matrix with given column and row number,
+        which is filled with all random floating numbers from [0, 1)
+        """
+        return Matrix(row_num, col_num,
+                [random.random() for i in xrange(row_num * col_num) ])
 
     def item(self, row_id, col_id):
         if row_id < 0 or self.row_num <= row_id:
@@ -179,6 +205,16 @@ if __name__ == "__main__":
     v2 = Vector.fromIterable(xrange(4, 0, -1))
     print dot_prod(v, v2)
 
+    v = Vector.fromRandom(3)
+    print v.data
+
+    v2 = copy.copy(v)
+    v2[0] = 3.1415926
+    print v.data
+    print v2.data
+
+    print "-------------"
+
     m = Matrix(3, 3)
     print m.data
 
@@ -199,6 +235,9 @@ if __name__ == "__main__":
     print m.data
     print m2.data
     print mmul(m, m2).data
+
+    m = Matrix.fromRandom(3, 4)
+    print m.data
 
 
 
