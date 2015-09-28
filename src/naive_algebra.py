@@ -70,6 +70,14 @@ class Vector:
 
         return self
 
+    def append(self, num):
+        self.data.append(num)
+        return self
+
+    def extend(self, iterator):
+        self.data.extend(iterator)
+        return self
+
     @classmethod
     def dot_prod(cls, one, another):
         if one.__class__.__name__ != 'Vector' or one.__class__.__name__ != another.__class__.__name__:
