@@ -4,6 +4,7 @@
 import random, math
 from copy import copy
 from naive_algebra import Vector, Matrix, dot_prod, mmul, vmul
+from itertools import izip
 
 class FeedForwardNetwork:
     """
@@ -101,16 +102,22 @@ class FeedForwardNetwork:
 
         pass
 
-    def train(self, sample_generator):
-        for (x, y) in sample_generator():
-            pass
-        pass
+    def train(self, generator):
+        for (x, y) in generator:
+            self._forward(x)
+            self._backward(x, y)
 
 def sigmoid(z):
     return 1.0 / (1 + math.exp(-z))
 
 def vsigmoid(v):
     return Vector.fromIterable(sigmoid(v[i]) for i in xrange(len(v)))
+
+def sample_wrapper(data):
+    for (img, label) in izip(data[0], data[1]):
+        x = Vector(img)
+        y = Vector.fromIterable(1 if pos == label else 0 for pos in xrange(0))
+        yield (x, y)
 
 if __name__ == "__main__":
     print sigmoid(1)
