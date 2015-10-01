@@ -91,6 +91,16 @@ class Vector:
     def __copy__(self):
         return Vector(copy.copy(self.data))
 
+    def assign(self, vec):
+        '''
+        assign values to a vector, in order to avoid to copy a large object
+        '''
+        if len(self) != len(vec):
+            raise ValueError('Unequal length of vectors')
+
+        for i in xrange(len(vec)):
+            self.data[i] = vec[i]
+
 def dot_prod(one, another):
     return Vector.dot_prod(one, another)
 
@@ -128,6 +138,38 @@ class Matrix:
         """
         return Matrix(row_num, col_num,
                 [random.random() for i in xrange(row_num * col_num) ])
+
+    @classmethod
+    def fromIterable(self, row_num, col_num, dataiter, bycol = False):
+        return Matrix(row_num, col_num, list(dataiter))
+
+    def __add__(self, other):
+        return Matrix(self.row_num, self.col_num, data = list(
+            self.data[i] + other.data[i] for i in xrange(len(self.data))
+            ))
+
+    def __iadd__(self, other):
+        if self.row_num != other.row_num or other.col_num != other.col_num:
+            raise ValueError('two matrices are not in the same size')
+
+        for i in xrange(len(self.data)):
+            self.data[i] += other.data[i]
+
+        return self
+
+    def __sub__(self, other):
+        return Matrix(self.row_num, self.col_num, data = list(
+            self.data[i] - other.data[i] for i in xrange(len(self.data))
+            ))
+
+    def __isub__(self, other):
+        if self.row_num != other.row_num or other.col_num != other.col_num:
+            raise ValueError('two matrices are not in the same size')
+
+        for i in xrange(len(self.data)):
+            self.data[i] -= other.data[i]
+
+        return self
 
     def item(self, row_id, col_id):
         if row_id < 0 or self.row_num <= row_id:
@@ -194,6 +236,19 @@ class Matrix:
 def mmul(one, another):
     return Matrix.mul(one, another)
 
+def vmul(m, vec):
+    """
+    Multiply a matrix with a vector on the right, output a vector again
+    """
+    if m.__class__.__name__ != 'Matrix' or vec.__class__.__name__ != 'Vector':
+        raise TypeError('Matrix and Vector is required to do multiplication')
+
+    if m.col_num != len(vec):
+        raise ValueError('Unequal column number and vector length')
+
+    return Vector.fromIterable(dot_prod(m.row(row_id), vec)
+            for row_id in xrange(m.row_num))
+
 if __name__ == "__main__":
     v = Vector([1, 2, 3])
     print v.data
@@ -238,13 +293,40 @@ if __name__ == "__main__":
     print m.row(1).data
     print m.col(1).data
 
+    print "mmul"
     m = Matrix(3, 3, data = [1, 2, 3, 4, 5, 6, 7, 8, 9])
     m2 = Matrix(3, 2, data = [1, 2, 2, 1, 2, 1])
     print m.data
     print m2.data
     print mmul(m, m2).data
 
+    print "Matrix.fromRandom"
     m = Matrix.fromRandom(3, 4)
+    print m.data
+
+    print "vmul"
+    m = Matrix(3, 2, data = [1, 2, 3, 4, 5, 6])
+    v = Vector([1, 10])
+    print vmul(m, v).data
+
+    print "Matrix.fromIterable"
+    m = Matrix.fromIterable(3, 3, xrange(9))
+    print m.data
+
+    print "Matrix add + "
+    m = Matrix.fromIterable(3, 2, xrange(6))
+    m2 = Matrix.fromIterable(3, 2, (i * 20 for i in xrange(6)))
+    print (m + m2).data
+    print m.data
+    m += m2
+    print m.data
+
+    print "Matrix sub - "
+    m = Matrix.fromIterable(3, 2, xrange(6))
+    m2 = Matrix(3, 2, [1] * 6)
+    print (m - m2).data
+    print m.data
+    m -= m2
     print m.data
 
 
