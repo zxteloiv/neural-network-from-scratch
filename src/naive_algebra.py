@@ -45,12 +45,12 @@ class Vector:
     def equalTo(self, other, threshold = 0):
         return (len(self) == len(other)
                 and all(abs(self.data[i] - other.data[i]) <= threshold
-                    for i in len(self.data)))
+                    for i in xrange(len(self.data))))
 
     def notEqualTo(self, other, threshold = 0):
         return (len(self) != len(other)
                 or any(abs(self.data[i] - other.data[i]) > threshold
-                    for i in len(self.data)))
+                    for i in xrange(len(self.data))))
 
     def __add__(self, another):
         """ overload + operator """
@@ -195,12 +195,12 @@ class Matrix:
     def equalTo(self, other, threshold = 0):
         return (self.row_num == other.row_num and self.col_num == other.col_num
                 and all(abs(self.data[i] - other.data[i]) <= threshold
-                    for i in len(self.data)))
+                    for i in xrange(len(self.data))))
 
     def notEqualTo(self, other, threshold = 0):
         return (self.row_num != other.row_num or self.col_num != other.col_num
                 or any(abs(self.data[i] - other.data[i]) > threshold
-                    for i in len(self.data)))
+                    for i in xrange(len(self.data))))
 
     def __add__(self, other):
         return Matrix(self.row_num, self.col_num, data = list(
