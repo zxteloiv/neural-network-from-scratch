@@ -59,9 +59,36 @@ class Vector:
 
         return self
 
+    def __sub__(self, another):
+        """ overload - operator """
+        if another.__class__.__name__ != self.__class__.__name__:
+            raise TypeError('Another is not Vector')
+
+        if len(self) != len(another):
+            raise ValueError('Unequal length of vectors')
+
+        return Vector([self.data[i] - another.data[i] for i in xrange(len(self))])
+
+    def __isub__(self, another):
+        """ overload -= operator """
+        if another.__class__.__name__ != self.__class__.__name__:
+            raise TypeError('Another is not Vector')
+
+        if len(self) != len(another):
+            raise ValueError('Unequal length of vectors')
+
+        for i in xrange(len(self)):
+            self.data[i] -= another.data[i]
+
+        return self
+
     def __mul__(self, number):
         """ overload * operator, multiplied by a number """
         return Vector([self.data[i] * number for i in xrange(len(self))])
+
+    def __rmul__(self, number):
+        """ overload * operator, multiplied by a number on the left """
+        return self.__mul__(number)
 
     def __imul__(self, number):
         """ overload *= operator, multiplied by a number """
@@ -211,7 +238,11 @@ class Matrix:
 
     def __mul__(self, number):
         """ overload * operator, multiplied by a number """
-        return Matrix(self.row_num, self.col_num, self.data)
+        return Matrix(self.row_num, self.col_num, [x * number for x in self.data])
+
+    def __rmul__(self, number):
+        """ overload * operator, multiplied by a number """
+        return self.__mul__(number)
 
     def __imul__(self, number):
         """ overload *= operator, multiplied by a number """
