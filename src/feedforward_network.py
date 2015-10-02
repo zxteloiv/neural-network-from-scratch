@@ -24,16 +24,22 @@ class FeedForwardNetwork:
         self.eta = eta
 
         # 1. Initiate each layer: output, partial_output and weight,
-        #    although partial_output is useless for the input layer and weight is
-        #    useless for the output layer.
+        #    although partial_output is useless for the input layer, similarly
+        #    weight and bias are useless for the output layer.
         #
         # 2. Partial_weight is an internal variable and will not be stored in
         #    a layer.
         #
-        self.layers = [ {'output':Vector.fromIterable(0 for i in dim_list[l]),
-            'partial_output':Vector.fromIterable(0 for i in dim_list[l]),
-            'weight':Matrix.fromRandom(dim_list[l], dim_list[l - 1] + 1)}
-            for l in xrange(depth) ]
+        self.layers = [ {'output':Vector.fromIterable(0 for i in xrange(dim_list[l])),
+            'partial_output':Vector.fromIterable(0 for i in xrange(dim_list[l])),
+            'weight':Matrix.fromRandom(dim_list[l + 1], dim_list[l]),
+            'bias':Vector.fromRandom(dim_list[l + 1])}
+            for l in xrange(depth - 1) ]
+        
+        # output layer
+        self.layers.append({'output':Vector.fromList([0] * dim_list[depth - 1]),
+            'partial_output':Vector.fromList([0] * dim_list[depth - 1]),
+            'weight': None, 'bias': None})
 
     def inference(self, vector):
         vec = copy.copy(vector)
@@ -49,7 +55,8 @@ class FeedForwardNetwork:
         for layer_id in xrange(1, self.depth):
             weight = self.layers[layer_id - 1]['weight']
             indata = self.layers[layer_id - 1]['output']
-            self.layers[layer_id]['output'] = vsigmoid(vmul(weight, indata))
+            bias = self.layers[layer_id - 1]['bias']
+            self.layers[layer_id]['output'] = vsigmoid(vmul(weight, indata) + bias)
 
     def _backward(self, x, y):
         # output layer
@@ -57,14 +64,16 @@ class FeedForwardNetwork:
         output_layer = self.layers[layer_id]
         output = output_layer['output']
         output_layer['partial_output'].assign(Vector.fromIterable(
-            output[i] - y[i] for i in self.dim_list[layer_id]
+            output[i] - y[i] for i in xrange(self.dim_list[layer_id])
             ))
 
         # hidden layer and input layer
         for layer_id in xrange(self.depth - 2, -1, -1):
             layer = self.layers[layer_id]
             weight = layer['weight']
+            bias = layer['bias']
             partial_output = layer['partial_output']
+            output = layer['output']
             last_output = self.layers[layer_id + 1]['output']
             last_partial = self.layers[layer_id + 1]['partial_output']
 
@@ -81,26 +90,38 @@ class FeedForwardNetwork:
                 layer['partial_output'].assign(Vector.fromIterable(
                     sum(last_partial[i] * last_output[i] * (1 - last_output[i])
                         * weight.item(i, k)
-                        for i in self.dim_list[layer_id + 1])
-                    for k in self.dim_list[layer_id] ))
+                        for i in xrange(self.dim_list[layer_id + 1]))
+                    for k in xrange(self.dim_list[layer_id] )))
 
             """
             Partial weight for every layer except the output one:
             \frac {\partial E} {\partial w_{ji}^{(l)}} = 
-                \frac {\partial E} {\partial O_i^{(l + 1)}}
+                \frac {\partial E} {\partial O_j^{(l + 1)}}
                     * O_j^{(l + 1)} * (1 - O_j^{(l+1)}) * O_i^{(l)}
             """
             partial_weight = Matrix.fromIterable(weight.row_num, weight.col_num, (
                     last_partial[row_id] 
                     * last_output[row_id] * (1 - last_output[row_id])
                     * output[col_id]
-                    for row_id in self.dim_list[layer_id + 1]
-                    for col_id in self.dim_list[layer_id]
+                    for row_id in xrange(self.dim_list[layer_id + 1])
+                    for col_id in xrange(self.dim_list[layer_id])
                     ))
 
             weight -= self.eta * partial_weight
 
-        pass
+            """
+            Partial bias is almost exact as the partial weight,
+            but for every item in the bias vector the last item is 1
+            \frac {\partial E}{\partial b_j^{(l)}} =
+                \frac {\partial E}{\partial O_j^{(l + 1)}}
+                    O_j^{(l + 1)} (1 - O_j^{(l+1)}) * 1
+            """
+            partial_bias = Vector.fromIterable(
+                    last_partial[row_id]
+                    * last_output[row_id] * (1 - last_output[row_id]) * 1
+                    for row_id in xrange(self.dim_list[layer_id + 1])
+                    )
+            bias -= self.eta * partial_bias
 
     def train(self, generator):
         for (x, y) in generator:
@@ -116,7 +137,7 @@ def vsigmoid(v):
 def sample_wrapper(data):
     for (img, label) in izip(data[0], data[1]):
         x = Vector(img)
-        y = Vector.fromIterable(1 if pos == label else 0 for pos in xrange(0))
+        y = Vector.fromIterable(1 if pos == label else 0 for pos in xrange(10))
         yield (x, y)
 
 if __name__ == "__main__":
