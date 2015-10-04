@@ -42,6 +42,9 @@ class Vector:
     def __ne__(self, other):
         return self.notEqualTo(other, 0)
 
+    def __str__(self):
+        return str(self.data)
+
     def equalTo(self, other, threshold = 0):
         return (len(self) == len(other)
                 and all(abs(self.data[i] - other.data[i]) <= threshold
@@ -314,7 +317,7 @@ def vmul(m, vec):
 
 if __name__ == "__main__":
     v = Vector([1, 2, 3])
-    print v.data
+    print v
 
     v = Vector.fromList([4, 5, 6])
     print v.data
