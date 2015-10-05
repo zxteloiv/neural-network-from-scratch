@@ -116,6 +116,21 @@ class Vector:
 
         return self
 
+    def __div__(self, number):
+        """ overload / operator, multiplied by a number """
+        return Vector([self.data[i] / number for i in xrange(len(self))])
+
+    def __rdiv__(self, number):
+        """ overload / operator, multiplied by a number on the left """
+        return self.__div__(number)
+
+    def __idiv__(self, number):
+        """ overload /= operator, multiplied by a number """
+        for i in xrange(len(self)):
+            self.data[i] /= number
+
+        return self
+
     def append(self, num):
         self.data.append(num)
         return self
@@ -283,6 +298,21 @@ class Matrix:
         """ overload *= operator, multiplied by a number """
         for i in self.col_num * self.row_num:
             self.data[i] *= number
+
+        return self
+
+    def __div__(self, number):
+        """ overload / operator, multiplied by a number """
+        return Matrix(self.row_num, self.col_num, [x / number for x in self.data])
+
+    def __rdiv__(self, number):
+        """ overload / operator, multiplied by a number """
+        return self.__div__(number)
+
+    def __idiv__(self, number):
+        """ overload /= operator, multiplied by a number """
+        for i in self.col_num * self.row_num:
+            self.data[i] /= number
 
         return self
 
