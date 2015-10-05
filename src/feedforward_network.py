@@ -42,10 +42,15 @@ class FeedForwardNetwork:
             'weight': None, 'bias': None})
 
     def inference(self, vector):
-        vec = copy.copy(vector)
-        self._forward(self, vec)
+        self._forward(vector)
         output = self.layers[self.depth - 1]['output']
-        return Vector.fromIterable(1 if o > 0.5 else 0 for o in output.data)
+        maxpos, maxval = 0, 0
+        for i in xrange(len(output)):
+            if maxval < output[i]:
+                maxpos, maxval = i, output[i]
+        rtn = Vector.fromList([0] * len(output))
+        rtn[maxpos] = 1
+        return rtn
 
     def _forward(self, x):
         # input layer
@@ -56,7 +61,10 @@ class FeedForwardNetwork:
             weight = self.layers[layer_id - 1]['weight']
             indata = self.layers[layer_id - 1]['output']
             bias = self.layers[layer_id - 1]['bias']
-            self.layers[layer_id]['output'] = vsigmoid(vmul(weight, indata) + bias)
+            output = (vmul(weight, indata) + bias)
+            # normalize with the amount of neurons in last layer
+            output = vsigmoid(output / (self.dim_list[layer_id - 1] + 1.0))
+            self.layers[layer_id]['output'] = output
 
     def _backward(self, x, y):
         # output layer
@@ -91,6 +99,7 @@ class FeedForwardNetwork:
                     sum(last_partial[i] * last_output[i] * (1 - last_output[i])
                         * weight.item(i, k)
                         for i in xrange(self.dim_list[layer_id + 1]))
+                    / (self.dim_list[layer_id] + 1.0)
                     for k in xrange(self.dim_list[layer_id] )))
 
             """
@@ -103,6 +112,7 @@ class FeedForwardNetwork:
                     last_partial[row_id] 
                     * last_output[row_id] * (1 - last_output[row_id])
                     * output[col_id]
+                    / (self.dim_list[layer_id] + 1.0)
                     for row_id in xrange(self.dim_list[layer_id + 1])
                     for col_id in xrange(self.dim_list[layer_id])
                     ))
@@ -119,14 +129,21 @@ class FeedForwardNetwork:
             partial_bias = Vector.fromIterable(
                     last_partial[row_id]
                     * last_output[row_id] * (1 - last_output[row_id]) * 1
+                    / (self.dim_list[layer_id] + 1.0)
                     for row_id in xrange(self.dim_list[layer_id + 1])
                     )
             bias -= self.eta * partial_bias
 
-    def train(self, generator):
+    def train(self, generator, logger = None, limit = 100):
+        counter = 0
         for (x, y) in generator:
+            counter += 1
+            if logger != None and counter % 10 == 0:
+                logger(counter)
             self._forward(x)
             self._backward(x, y)
+
+            if counter >= limit: break
 
 def sigmoid(z):
     return 1.0 / (1 + math.exp(-z))
