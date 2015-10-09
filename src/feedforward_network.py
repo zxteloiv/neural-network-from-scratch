@@ -69,19 +69,19 @@ class FeedForwardNetwork:
     def _backward(self, x, y):
         # output layer
         layer_id = self.depth - 1
-        output_layer = self.layers[layer_id]
-        output = output_layer['output']
-        output_layer['partial_output'].assign(Vector.fromIterable(
+        output = self.layers[layer_id]['output']
+        self.layers[layer_id]['partial_output'].assign(Vector.fromIterable(
             output[i] - y[i] for i in xrange(self.dim_list[layer_id])
             ))
 
+        loss = sum((output[i] - y[i]) ** 2 for i in xrange(self.dim_list[layer_id]))
+
         # hidden layer and input layer
         for layer_id in xrange(self.depth - 2, -1, -1):
-            layer = self.layers[layer_id]
-            weight = layer['weight']
-            bias = layer['bias']
-            partial_output = layer['partial_output']
-            output = layer['output']
+            weight = self.layers[layer_id]['weight']
+            bias = self.layers[layer_id]['bias']
+            partial_output = self.layers[layer_id]['partial_output']
+            output = self.layers[layer_id]['output']
             last_output = self.layers[layer_id + 1]['output']
             last_partial = self.layers[layer_id + 1]['partial_output']
 
@@ -95,7 +95,7 @@ class FeedForwardNetwork:
             thus we don't compute it.
             """
             if layer_id > 0:
-                layer['partial_output'].assign(Vector.fromIterable(
+                self.layers[layer_id]['partial_output'].assign(Vector.fromIterable(
                     sum(last_partial[i] * last_output[i] * (1 - last_output[i])
                         * weight.item(i, k)
                         for i in xrange(self.dim_list[layer_id + 1]))
@@ -117,7 +117,7 @@ class FeedForwardNetwork:
                     for col_id in xrange(self.dim_list[layer_id])
                     ))
 
-            weight -= self.eta * partial_weight
+            self.layers[layer_id]['weight'] -= self.eta * partial_weight
 
             """
             Partial bias is almost exact as the partial weight,
@@ -132,17 +132,20 @@ class FeedForwardNetwork:
                     / (self.dim_list[layer_id] + 1.0)
                     for row_id in xrange(self.dim_list[layer_id + 1])
                     )
-            bias -= self.eta * partial_bias
+            self.layers[layer_id]['bias'] -= self.eta * partial_bias
+
+        return loss
 
     def train(self, generator, logger = None, limit = 100):
         counter = 0
         for (x, y) in generator:
-            counter += 1
-            if logger != None and counter % 10 == 0:
-                logger(counter)
             self._forward(x)
-            self._backward(x, y)
+            loss = self._backward(x, y)
 
+            if logger != None and counter % 10 == 0:
+                logger(str(counter) + "," + str(loss))
+
+            counter += 1
             if counter >= limit: break
 
 def sigmoid(z):
