@@ -1,3 +1,14 @@
+# coding: utf-8
+
+"""
+This code file is retrieved from the following link originally, I only made small
+modification. But I don't know how to use git submodule now, so I copied the whole
+file.
+
+https://github.com/sorki/python-mnist
+
+"""
+
 import os
 import struct
 from array import array

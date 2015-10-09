@@ -39,7 +39,19 @@ def main(mnist_path):
 
     # start training
     puttime('start training')
-    network.train(generator(x, y), puttime, limit = 1000)
+    network.train(generator(x, y), puttime, limit = 1)
+
+    # testing
+    out = network.inference(x)
+    print x, '->', out
+
+    # start training
+    puttime('start training')
+    network.train(generator(x, y), puttime, limit = 1)
+
+    # testing
+    out = network.inference(x)
+    print x, '->', out
 
 if __name__ == '__main__':
     main('')

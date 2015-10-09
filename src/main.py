@@ -21,14 +21,14 @@ def main(mnist_path):
 
     network = feedforward_network.FeedForwardNetwork(
             dim_list = [input_size, 300, 10],
-            eta = 0.1
+            eta = 0.01
             )
 
     # start training
     puttime('start training')
     for i in xrange(1):
         generator = feedforward_network.sample_wrapper(training_data)
-        network.train(generator, puttime, limit = 1000)
+        network.train(generator, puttime, limit = 2000)
 
     # start testing
     puttime('start testing')
